@@ -31,5 +31,5 @@
 
 ### 代理ip
 - 等我的下篇 ，我会传一个代理ip池搭建的方法。然后轻松愉快的通过rest 调取最新被确认过可以用的ip
-
-如果基本上在这里 大家只要写 每个分层的parse类 就可以了 即自己编辑my_spider.py 和my_config.py 就好了。 
+--- 
+ 大家只要写 每个分层的parse类 就可以了 即自己编辑my_spider.py 和my_config.py 就好了。 
