@@ -1,57 +1,60 @@
-from urllib.parse import  urlparse,urlsplit
-import requests
-import random
-import time
-from datetime import datetime, timedelta
 import socket
+import time
+import requests
+from datetime import datetime
+from urllib.parse import urlparse, urlsplit
+
+
 
 DEFAULT_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36'
 DEFAULT_DELAY = 1
-DEFAULT_RETRIES = 8
+DEFAULT_RETRIES = 2
 DEFAULT_TIMEOUT = 60
-DEFAULT_ENCODING ="utf8"
+DEFAULT_ENCODING = "utf8"
 
 
 class Downloader:
-    proxies =None
+    proxies = None
+
     def __init__(self, delay=DEFAULT_DELAY, user_agent=DEFAULT_AGENT, num_retries=DEFAULT_RETRIES,
-                 timeout=DEFAULT_TIMEOUT ,encoding =DEFAULT_ENCODING ,request_verify =None):
+                 timeout=DEFAULT_TIMEOUT, encoding=DEFAULT_ENCODING, request_verify=None):
         socket.setdefaulttimeout(timeout)
         self.throttle = Throttle(delay)
         self.user_agent = user_agent
         self.num_retries = num_retries
         self.timeout = timeout
-        self.encoding =encoding
-        self.request_verify =request_verify
-        self.req_proxies =None
-    def chage_proxy(self):
-        return None
+        self.encoding = encoding
+        self.request_verify = request_verify
+        self.req_proxies = None
 
+    def change_proxy(self):
+        return None
 
     def __call__(self, url):
         self.throttle.wait(url)
         headers = {'User-agent': self.user_agent}
 
-        result = self.download(url,headers =headers,  num_retries= self.num_retries)
+        result = self.download(url, headers=headers, num_retries=self.num_retries)
 
         return result['html']
 
-    def download(self, url, headers,num_retries ,data=None, method='GET', req=requests ):
+    def download(self, url, headers, num_retries, data=None, method='GET', req=requests):
 
-        proxies = {urlparse(url).scheme :Downloader.proxies}
-        print(proxies,"--------")
+        proxies = {urlparse(url).scheme: Downloader.proxies}
+        print(proxies, "--------")
         try:
             if method == 'POST':
                 res = req.post(url, proxies=proxies, headers=headers, timeout=self.timeout, data=data,
 
-                               verify=self .request_verify )
+                               verify=self.request_verify)
             else:
-                res = req.get(url, proxies= proxies, headers=headers, timeout=self.timeout, data=data,
-                              verify=self.request_verify )
+                res = req.get(url, proxies=proxies, headers=headers, timeout=self.timeout, data=data,
+                              verify=self.request_verify)
                 # print(res.headers)
-            res.encoding =self. encoding
+            res.encoding = self.encoding
             html = res.text
-            if not self.result__testing(html):  #对所得到源码进行检测。
+            # print(html)
+            if not self.result__testing(html):  # 对所得到源码进行检测。
                 raise Exception("can not pass the result testing")
             code = res.status_code
 
@@ -60,19 +63,15 @@ class Downloader:
             print('download error', e)
             if num_retries > 1:
                 time.sleep(5)
-                Downloader.proxies = self.chage_proxy()  # 换ip
+                Downloader.proxies = self.change_proxy()  # 换ip
 
-                return   self.download(url, headers=headers, num_retries = num_retries - 1 )
+                return self.download(url, headers=headers, num_retries=num_retries - 1)
             else:
 
-                raise  Exception("Exception : download error  more than {} times ".format(self.num_retries))
+                raise Exception("Exception : download error  more than {} times ".format(self.num_retries))
 
-
-
-
-    def result__testing(self,html):
-        return  True
-
+    def result__testing(self, html):
+        return True
 
 
 class Throttle:
@@ -95,5 +94,3 @@ class Throttle:
             if sleep_secs > 0:
                 time.sleep(sleep_secs)
         self.domains[domain] = datetime.now()
-
-

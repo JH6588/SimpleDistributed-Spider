@@ -8,7 +8,7 @@ def screen_process(x,n):
     m =dr.count(x)
     print(m,"个进程")
     while m <n:
-        subprocess.Popen("python3 {}".format(x) ,shell =True)
+        subprocess.Popen("python {}".format(x) ,shell =True)
         m +=1
         print("启动,还要启动{}".format(n-m))
         time.sleep(20)
@@ -16,5 +16,5 @@ def screen_process(x,n):
 
 if __name__ == '__main__':
     while True:
-        screen_process("gj_run.py",10)
+        screen_process("gj/gj_run.py",10)
         time.sleep(60)
