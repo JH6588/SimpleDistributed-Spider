@@ -1,19 +1,15 @@
-from spider_utils import SpiderHelper
+import pymongo
 from downloader import Downloader
-from config import *
 from node import NodeProcess
 from schedule import *
-import pymongo
-import traceback
+from spider_utils import SpiderHelper
 
-mongo_conn = pymongo.MongoClient(host=MONGO_HOST)
-mongo_conn.admin.authenticate(MONGO_USER, MONGO_PASSWD)
-db = mongo_conn.car
-tab = db.gj
-
+MONGO_CONN = pymongo.MongoClient(host=MONGO_HOST)
+MONGO_CONN.admin.authenticate(MONGO_USER, MONGO_PASSWD)
+DB = MONGO_CONN.car
+TAB = DB.gj
 
 
-mobile_user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1"
 
 
 class GanDownloader(Downloader):  # 根据爬虫任务定制自己的download 类
@@ -30,26 +26,29 @@ class GanDownloader(Downloader):  # 根据爬虫任务定制自己的download �
         return Downloader()(PROXY_CHANGE_URL)  # 实现你自己 得到新ip的方法
 
 
-ganji_downloader = GanDownloader(num_retries=5, user_agent=mobile_user_agent, request_verify=False)
+ganji_downloader = GanDownloader(num_retries=5, user_agent=MOBILE_USER_AGENT, request_verify=False)
 
 
 class StartNode(NodeProcess):  # city 取得所有城市地址
     def response(self):
         return ganji_downloader(self.url)
 
-    # 如果要做更新任务
-    # def set_start_end(self, start ,end):
-    #     self.page_range = range(start ,end)
-
-    # def parse(self):
-    #     # 35809
-    #     for i in page_range:
-    #         REDISPRO.rpush(self.name, XX_DOMAIN + "/index.php/vod/detail/id/{}.html".format(i))
-
+    # 一次性抓取
     def parse(self):
-        self.set_url( 'https://3g.ganji.com/gz/?a=c&ifid=shouye_chengshi&backURL=ershouche%2Fa1s1%2F')
+        self.set_url('https://3g.ganji.com/gz/?a=c&ifid=shouye_chengshi&backURL=ershouche%2Fa1s1%2F')
         for ele in self.make_tree().xpath('//div[@class ="city-char"]//a'):
             REDISPRO.lpush_key(self.name, GANJI_DOMAIN + ele.xpath("./@href")[0])
+
+    # 需要考虑更新的话，最好改造成 如这样的形式
+    # def set_initiate_data(self, initiate_data):
+    #     self.initiate_data = initiate_data
+    #
+    # def get_initiate_data(self):
+    #     return self.initiate_data
+    # def parse(self):
+    #     # 35809
+    #     for i in self. get_initiate_data():
+    #         REDISPRO.conn.rpush(self.name, XX_DOMAIN + "/index.php/vod/detail/id/{}.html".format(i))
 
 
 class LayerNodePages(NodeProcess):  # page
@@ -100,29 +99,29 @@ class LayerNodeDetail(NodeProcess):
 
             item['_id'] = item['phone_number'] + item['car']
             print(item)
-            tab.insert(item)
+            TAB.insert(item)
         except Exception as e:
             print("错误url: {}原因 :{} \n,".format(self.url, e), traceback.print_exc())
 
 
-gj_spider_list = [StartNode("city"), LayerNodePages("pages"), LayerNodeUnit("unit"), LayerNodeDetail('detail')]
-
+GJ_SPIDER_LIST = [StartNode("city"), LayerNodePages("pages"), LayerNodeUnit("unit"), LayerNodeDetail('detail')]
+GJ_SCHEDULE = Schedules(GJ_SPIDER_LIST[0], "gj")
 if __name__ == '__main__':
 
     import sys, signal
 
-
+    #crtl +c 捕获
     def signal_handler(signal, frame):
-        mongo_conn.close()
+        MONGO_CONN.close()
         sys.exit(0)
 
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    # 是否需要运行start 节点
-    if will_initlize(gj_spider_list):
-        initlizer(gj_spider_list[0])
+    if GJ_SCHEDULE.will_initlize(GJ_SPIDER_LIST):
+        GJ_SCHEDULE.initlizer([])
+
     try:
-        run_spider(gj_spider_list, catch_exception=True, except_wait=180, catch_error_link=False)
+        GJ_SCHEDULE.run_spider(GJ_SPIDER_LIST, catch_exception=True, except_wait=180, catch_error_link=False)
     except:
-        mongo_conn.close()
+        MONGO_CONN.close()

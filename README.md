@@ -23,8 +23,12 @@
 ### 排程
 - 我们在myspider里。将每一次的分层 都用一个类来表达。（直接继承 NodeProcess 就好了）.写好自己的parser 。
 - 然后实例化第一个类 StartNode . ，在根据排程的顺序写一个列表spider_list 就Ok了
-- schedule.py 中的run_spider 函数 已经做好了排程
-- 如果想要实现 增量爬取 ，StartNode 需要实现 set_start_end 方法。
+- schedule.py Schedules 中的run_spider方法 已经做好了排程
+- 如果想要实现 增量爬取 ，StartNode 需要实现 set_initiate_data 方法。 init_data 是一个范围的概念，在parse中需要用到这个
+范围来规范爬虫。
+比如根据页码 或者 url中的递增标识的id范围 增量爬取时 那inint_data 可能就类似range(100,200) ，根据时间增量爬取时，
+init_data 也可以为时间戳范围或者干脆时date 字符串的元组（2018-01-01，2019-01-01）。  
+
 
 ### 布署和运行
 - 首先在主服务器上安装redis ，用于做缓存队列使用

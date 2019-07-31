@@ -7,10 +7,6 @@ class Redispro:
         self.pool = redis.ConnectionPool(host=host, port=port, db=db ,password = password)
         self.conn = redis.StrictRedis(connection_pool=self.pool)
 
-    def rpush_key(self, k, v):
-        self.conn.rpush(k, v)
-    def lpush_key(self,k,v):
-        self.conn.lpush(k,v)
     def pop_key(self, k):
         v = self.conn.rpop(k)
         if v != None:
