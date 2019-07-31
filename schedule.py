@@ -93,3 +93,5 @@ class Schedules:
             self.initlizer(self.get_update_initiate_data(last_idx))
 
         self.run_spider(nodelist, catch_error_link=catch_error_link, catch_exception=catch_exception)
+        REDISPRO.conn.hset(SPIDER_UPDATER, self.source, last_idx)
+
